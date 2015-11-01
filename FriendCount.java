@@ -1,6 +1,5 @@
 import java.io.IOException;
 import java.util.StringTokenizer;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -13,20 +12,17 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class FriendCount{
 
-public static class TokenizerMapper
-     extends Mapper<Object, Text, Text, IntWritable>{
-
+public static class TokenizerMapper extends Mapper<Object, Text, Text, IntWritable>{
   private final static IntWritable one = new IntWritable(1);
   private Text word = new Text();
   private int counter = 0;
 
-public void map(Object key, Text value, Context context
-                ) throws IOException, InterruptedException {
+  public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
               String[] tokens = value.toString().split(";");
-              if(counter==0)tokens[2]="0";
+              if(counter==0){tokens[2]="0";tokens[4]="0";}
               int age = Integer.parseInt(tokens[2]);
               String tranche = new String();
-              if(age<5)tranche="0-5";
+              if(age<5)tranche="0-5";//distribute age into categories
               else if(age>5 && age<12)tranche="6-12";
               else if(age>12 && age<17)tranche="13-17";
               else if(age>17 && age<25)tranche="18-25";
@@ -34,20 +30,16 @@ public void map(Object key, Text value, Context context
               else if(age>35 && age<45)tranche="36-45";
               else if(age>45 && age<60)tranche="46-60";
               else if(age>60)tranche="60+";
-              if(counter==0)tokens[4]="0";
               int friends = Integer.parseInt(tokens[4]);
               counter++;
               context.write(new Text(tranche), new IntWritable(friends));
-       }
-    }
+  }
+}
 
 
 
-public static class Reduce
-  extends Reducer<Text, IntWritable, Text, IntWritable> {
-       public void reduce(Text key, Iterable<IntWritable> values,
-                          Context context
-                          ) throws IOException,InterruptedException {
+  public static class Reduce extends Reducer<Text, IntWritable, Text, IntWritable> {
+              public void reduce(Text key, Iterable<IntWritable> values,Context context) throws IOException,InterruptedException {
               int sum = 0;
               int counter = 0;
               for (IntWritable val : values) {
@@ -55,8 +47,8 @@ public static class Reduce
                    counter++;
               }
               int avrg = sum/counter;
-       context.write(key , new IntWritable(avrg));
-       }
+              context.write(key , new IntWritable(avrg));
+  }
 }
 
 public static void main(String[] args) throws Exception {
